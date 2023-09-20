@@ -1,11 +1,10 @@
 import express from "express";
 import PDF from "pdfkit";
-import fs from 'fs';
-import cors from 'cors';
-import {colors} from '../styles/colors.js';
-import { data } from "../mockData.js";
+import cors from "cors";
+import fs from "fs";
+import {colors} from "../styles/colors.js";
+import {stringValidator,arrayValidator,objectValidator} from "../utils.js";
 
-//A4 (595.28 x 841.89)
 const generateRouter = express.Router();
 const {black,white,green} = colors;
 const margins = { top: 12, bottom: 12, left: 30, right: 30 };
@@ -14,13 +13,15 @@ const headings = ["CAREER SUMMARY", "WORK EXPERIENCE"];
 
 generateRouter.use(cors({
   origin:['http://192.168.0.103:3001','http://localhost:3001'],
-  methods: ['GET']
+  methods: ['GET','POST']
 }))
 
-generateRouter.get("/", (req, res) => {
+generateRouter.post("/", (req, res) => {
   try {
-   const {careerSummary,highestQualification:highestQual,hobbies,skills,workExperience:content,details,awards} = data;
+   const {careerSummary,highestAcademicQualification,hobbies,skills,workExperience:content,details,awards,personalProject} = req.body;
+   const {university,qualification,stream,gpa,from,to} = highestAcademicQualification
    const {mobile,name,email,linkedIn,location} = details;
+   //if(stringValidator(careerSummary) && objectValidator(highestAcademicQualification) && objectValidator(hobbies) && arrayValidator(skills) && arrayValidator(content) && arrayValidator(awards) && objectValidator(details) && objectValidator(personalProject) && stringValidator(university) && stringValidator(qualification) && stringValidator(stream) && stringValidator(gpa) && stringValidator(from) && stringValidator(to) && arrayValidator(hobbies))
     const pdf = new PDF({
       size: "A4",
       font: "Times-Roman",
@@ -34,28 +35,22 @@ generateRouter.get("/", (req, res) => {
     pdf.registerFont("Text Font", "fonts/TimesNewRoman.ttf");
     pdf.font("Heading Font", 16).text(name.toUpperCase(), { align: "center" });
   
-    pdf
-      .font("Text Font", 14)
-      .text(headings[0], 194.184, spacings[0], { fill: black });
+    pdf.font("Text Font", 14).text(headings[0], 194.184, spacings[0], { fill: black });
   
-    pdf
-      .font("Text Font", 10)
-      .text(careerSummary, 194.184, spacings[1], { align: "justify" });
+    pdf.font("Text Font", 10).text(careerSummary, 194.184, spacings[1], { align: "justify" });
   
     spacings.push(spacings[1] + 4 + pdf.heightOfString(careerSummary));
   
     pdf.moveTo(194.184, spacings[2]).lineTo(579.28, spacings[2]).stroke();
   
     spacings.push(spacings[2] + 4);
-    pdf
-      .font("Text Font", 14)
-      .text(headings[1], 194.184, spacings[3], { fill: black });
+
+    pdf.font("Text Font", 14).text(headings[1], 194.184, spacings[3], { fill: black });
+
     spacings.push(spacings[3] + pdf.heightOfString(headings[1]));
   
     content.forEach((item, i) => {
-      pdf
-        .font("Heading Font", 12)
-        .text(item.company, 194.184, spacings[spacings?.length - 1], {
+      pdf.font("Heading Font", 12).text(item.company, 194.184, spacings[spacings?.length - 1], {
           fill: black,
           continued: true,
         })
@@ -119,12 +114,26 @@ generateRouter.get("/", (req, res) => {
       .lineTo(579.28, spacings[spacings?.length - 1])
       .stroke();
     
+      pdf.font('Heading Font',10).text(personalProject?.name,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8)
+      pdf.font('Text Font',10).text(`About : ${personalProject?.about}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject?.name)+2)
+      pdf.font('Text Font',10).text(`Framework : ${personalProject?.framework}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject?.name)+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2)
+      pdf.font('Text Font',10).text(`Github Repository : `,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject?.name)+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2,{continued:true}).text(`${personalProject?.repository}`,{link:`${personalProject?.repository}`,underline:true})
+
+      pdf
+      .moveTo(194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject?.name)+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+6+pdf.heightOfString(`PS : ${personalProject?.postScript}`))
+      .lineTo(579.28, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject?.name)+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+6+pdf.heightOfString(`PS : ${personalProject?.postScript}`))
+      .stroke();
+
+      pdf.font('Text Font',14).text('HIGHEST ACADEMIC QUALIFICATION',194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `))
+      pdf.font('Text Font',10).text(`University : ${highestAcademicQualification?.university}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject?.postScript}`)+14+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+2)
+      pdf.font('Text Font',10).text(`Qualification : ${highestAcademicQualification?.qualification}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject?.postScript}`)+16+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+pdf.heightOfString(`University : ${highestAcademicQualification?.university}`)+2)
+      pdf.font('Text Font',10).text(`Stream : ${highestAcademicQualification?.stream}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject?.postScript}`)+18+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+pdf.heightOfString(`University : ${highestAcademicQualification?.university}`)+pdf.heightOfString(`Qualification : ${highestAcademicQualification?.qualification}`)+2)
+      pdf.font('Text Font',10).text(`GPA : ${highestAcademicQualification.gpa}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject?.postScript}`)+18+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+pdf.heightOfString(`University : ${highestAcademicQualification?.university}`)+pdf.heightOfString(`Qualification : ${highestAcademicQualification?.qualification}`)+pdf.heightOfString(`Stream : ${highestAcademicQualification?.stream}`)+4)
+      pdf.font('Text Font',10).text(`Duration : ${highestAcademicQualification?.from} - ${highestAcademicQualification?.to}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject?.postScript}`)+18+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+pdf.heightOfString('GITAM University')+pdf.heightOfString(`Qualification : ${highestAcademicQualification?.qualification}`)+pdf.heightOfString(`GPA : ${highestAcademicQualification.gpa}`)+pdf.heightOfString(`Stream : ${highestAcademicQualification?.stream}`)+6)
+
+      pdf.font('Heading Font',10).text(`PS : ${personalProject?.postScript}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject?.name)+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+2);
       pdf.font('Text Font',14).text('PERSONAL PROJECTS',194.184, spacings[spacings?.length - 1]+4)
-      pdf.font('Text Font',10).text('Name : CV Builder',194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8)
-      pdf.font('Text Font',10).text('About : A simple application that can be used to build CV\'s in PDF format',194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('Name : CV Builder')+2)
-      //pdf.font('Text Font',10).text('Description : ',194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('Name : CV Builder')+2+pdf.heightOfString('About : A simple application that can be used to build CV\'s in PDF format')+2)
-      pdf.font('Text Font',10).text('Framework : Express NodeJS for Backend',194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('Name : CV Builder')+2+pdf.heightOfString('About : A simple application that can be used to build CV\'s in PDF format')+2)
-  
+
     pdf.rect(16, spacings[0], 170.184, 777.89).fill(green);
     pdf.image("images/Passport.jpg", 16, spacings[0] + 12, {
       fit: [170.184, 120],
@@ -134,6 +143,7 @@ generateRouter.get("/", (req, res) => {
       .font("Heading Font", 12)
       .fillColor(white)
       .text("CONTACT", 16 + (170.184-(pdf.widthOfString("CONTACT")))/2, spacings[0] + 136);
+
       pdf.image("images/location.png", 32, spacings[0] + pdf.heightOfString("CONTACT") + 138.5,{fit:[10,10]});
       pdf.font("Text Font", 10).text(location, 46, spacings[0] + pdf.heightOfString("CONTACT") + 140,{baseline:'center'});
   
@@ -148,35 +158,28 @@ generateRouter.get("/", (req, res) => {
   
       pdf.moveTo(18,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+165).lineTo(184.184,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+165).stroke(white)
   
-      pdf.font("Heading Font",12).text("SKILLS",16 + (170.184-(pdf.widthOfString("SKILLS")))/2,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+157);
+      pdf.font("Heading Font",12).text("SKILLS / TOOLS",16 + (170.184-(pdf.widthOfString("SKILLS / TOOLS")))/2,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+157);
   
       pdf.font("Text Font", 10).list(skills,32,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+185,{bulletRadius:1.5,baseline:'hanging',lineGap:4,width:144.184});
   
       pdf.moveTo(18,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+425).lineTo(184.184,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+425).stroke(white);
   
-      pdf.font("Heading Font",12).text("AWARDS/RECOGNITIONS",16 + (170.184-(pdf.widthOfString("AWARDS/RECOGNITIONS")))/2,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+417,{width:160})
+      pdf.font("Heading Font",12).text("AWARDS / APPRAISALS",16 + (170.184-(pdf.widthOfString("AWARDS / APPRAISALS")))/2,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+417,{width:160})
       
-      pdf.font("Text Font",10).list(awards,32,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS/RECOGNITIONS")+435,{bulletRadius:1.5,lineGap:4,baseline:'hanging'});
+      pdf.font("Text Font",10).list(awards,32,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS / APPRAISALS")+435,{bulletRadius:1.5,lineGap:4,baseline:'hanging'});
   
-      pdf.moveTo(18,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS/RECOGNITIONS")+479).lineTo(184.184,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS/RECOGNITIONS")+479).stroke(white);
+      pdf.moveTo(18,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS / APPRAISALS")+479).lineTo(184.184,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS / APPRAISALS")+479).stroke(white);
   
-      pdf.font("Heading Font",12).text('HIGHEST QUALIFICATION',16 + (170.184-(pdf.widthOfString("HIGHEST QUALIFICATION")))/2,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS/RECOGNITIONS")+469)
+      pdf.font("Heading Font",12).text('HOBBIES',16 + (170.184-(pdf.widthOfString("HOBBIES")))/2,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS / APPRAISALS")+469)
       
-      pdf.font("Text Font",9).text(highestQual,24,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS/RECOGNITIONS")+505,{width:146.184,align:'justify',lineGap:2});
+      pdf.font("Text Font",10).list(hobbies,32,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS / APPRAISALS")+505-4,{bulletRadius:1.5,baseline:'hanging',lineGap:4});
   
-      pdf.moveTo(18,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS/RECOGNITIONS")+505+74).lineTo(184.184,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS/RECOGNITIONS")+505+74).stroke(white);
-  
-      pdf.font("Heading Font",12).text("HOBBIES",16 + (170.184-(pdf.widthOfString("HOBBIES")))/2,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS/RECOGNITIONS")+469+92);
-  
-      pdf.font("Text Font",10).list(hobbies,32,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS/RECOGNITIONS")+505+86,{bulletRadius:1.5,baseline:'hanging',lineGap:4});
-  
-      let pdfStream = fs.createWriteStream('CV.pdf');
       pdf.pipe(res);
+
       pdf.end();
-      // pdfStream.on('finish',()=>{
-      //   res.download('CV.pdf',{root:'.'});
-      //   //res.sendFile('CV.pdf',{root:'.'});
-      // })
+      fs.createWriteStream('CV.pdf').on('finish',()=>{
+        res.download('CV.pdf',{root:'.'});
+      })
   } catch (error) {
     console.log('Error',error);
     res.status(500).send({message:"Network Error"});
