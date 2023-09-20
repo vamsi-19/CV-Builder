@@ -1,0 +1,2 @@
+curl --location --request POST 'http://localhost:3000/api/generate/upload' \
+--form 'image=@"file/path.jpg"'

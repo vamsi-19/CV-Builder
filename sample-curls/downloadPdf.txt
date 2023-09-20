@@ -1,0 +1,58 @@
+curl --location --request POST 'http://localhost:3000/api/generate/' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "careerSummary": "Sample career summary",
+    "details": {
+        "name": "Name",
+        "mobile": "mobile number",
+        "email": "email",
+        "linkedIn": "linkedin URL",
+        "location": "Location string"
+    },
+    "workExperience": [
+        {
+            "company": "Company 1",
+            "location": "Location",
+            "roles": [
+                {
+                    "name": "1st role",
+                    "period": "duration string",
+                    "description": [
+                        {
+                            "text": "description 1",
+                            "link": "Associated url. Provide empty string if no url is present to display in the document"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "skills": [
+        "Skill1","Skill2"
+    ],
+    "hobbies": [
+        "Hobby1",
+        "Hobby2",
+        "Hobby3"
+    ],
+    "awards": [
+        "Award1",
+        "Award2",
+        "Award3"
+    ],
+    "personalProject": {
+        "name": "Project name",
+        "about": "About the project",
+        "framework": "Frameworks/stacks used",
+        "repository": "project repository",
+        "postScript": "Any postscript"
+    },
+    "highestAcademicQualification": {
+        "university": "University name",
+        "qualification": "Qualification",
+        "stream": "Stream",
+        "gpa": "GPA obtained",
+        "from": "course start year",
+        "to": "course ending year"
+    }
+}'
