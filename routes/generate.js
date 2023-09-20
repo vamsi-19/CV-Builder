@@ -16,12 +16,19 @@ generateRouter.use(cors({
   methods: ['GET','POST']
 }))
 
+const err = new Error();
+
 generateRouter.post("/", (req, res) => {
   try {
    const {careerSummary,highestAcademicQualification,hobbies,skills,workExperience:content,details,awards,personalProject} = req.body;
    const {university,qualification,stream,gpa,from,to} = highestAcademicQualification
    const {mobile,name,email,linkedIn,location} = details;
-   //if(stringValidator(careerSummary) && objectValidator(highestAcademicQualification) && objectValidator(hobbies) && arrayValidator(skills) && arrayValidator(content) && arrayValidator(awards) && objectValidator(details) && objectValidator(personalProject) && stringValidator(university) && stringValidator(qualification) && stringValidator(stream) && stringValidator(gpa) && stringValidator(from) && stringValidator(to) && arrayValidator(hobbies))
+   const {name:projName,about,framework,repository,postScript} = personalProject;
+   if(!(stringValidator(careerSummary) && objectValidator(highestAcademicQualification) && objectValidator(hobbies) && arrayValidator(skills) && arrayValidator(content) && arrayValidator(awards) && objectValidator(details) && objectValidator(personalProject) && stringValidator(university) && stringValidator(qualification) && stringValidator(stream) && stringValidator(gpa) && stringValidator(from) && stringValidator(to) && arrayValidator(hobbies) && stringValidator(projName) &&stringValidator(framework) &&stringValidator(repository) && stringValidator(postScript) && stringValidator(about) && Math.floor(parseInt(to)) > Math.floor(parseInt(from)))) {
+    err.message = '400';
+    throw new Error();
+   }
+   
     const pdf = new PDF({
       size: "A4",
       font: "Times-Roman",
@@ -50,42 +57,42 @@ generateRouter.post("/", (req, res) => {
     spacings.push(spacings[3] + pdf.heightOfString(headings[1]));
   
     content.forEach((item, i) => {
-      pdf.font("Heading Font", 12).text(item.company, 194.184, spacings[spacings?.length - 1], {
+      pdf.font("Heading Font", 12).text(item.company, 194.184, spacings[spacings.length - 1], {
           fill: black,
           continued: true,
         })
         .font("Text Font", 12)
-        .text(item.location, 194.184, spacings[spacings?.length - 1], {
+        .text(item.location, 194.184, spacings[spacings.length - 1], {
           align: "right",
           fill: black,
         });
       spacings.push(
-        spacings[spacings?.length - 1] + pdf.heightOfString(item.company)
+        spacings[spacings.length - 1] + pdf.heightOfString(item.company)
       );
   
       item["roles"].forEach((a, b) => {
         pdf
           .font("Heading Font", 12)
-          .text(a.name, 194.184, spacings[spacings?.length - 1], {
+          .text(a.name, 194.184, spacings[spacings.length - 1], {
             fill: black,
             continued: true,
           })
           .font("Text Font", 12)
-          .text(a.period, 194.184, spacings[spacings?.length - 1], {
+          .text(a.period, 194.184, spacings[spacings.length - 1], {
             fill: black,
             align: "right",
           });
         spacings.push(
-          spacings[spacings?.length - 1] + pdf.heightOfString(a.name) + 4
+          spacings[spacings.length - 1] + pdf.heightOfString(a.name) + 4
         );
   
         a["description"].forEach((p, q) => {
           let { text, link } = p;
           let linkObj =
-            link?.length > 0
+            link.length > 0
               ? { link, align: "justify", underline: true }
               : undefined;
-          pdf.text(star, 194.184, spacings[spacings?.length - 1], {
+          pdf.text(star, 194.184, spacings[spacings.length - 1], {
             baseline: "hanging",
           });
           pdf
@@ -93,7 +100,7 @@ generateRouter.post("/", (req, res) => {
             .text(
               `${text}`,
               194.184 + pdf.widthOfString(star) + 4,
-              spacings[spacings?.length - 1],
+              spacings[spacings.length - 1],
               {
                 align: "justify",
                 continued: true,
@@ -102,7 +109,7 @@ generateRouter.post("/", (req, res) => {
             )
             .text(`\n${link}`, linkObj);
           spacings.push(
-            spacings[spacings?.length - 1] +
+            spacings[spacings.length - 1] +
               pdf.heightOfString(a.description[q].text + `${a.description[q].link ? '\n' : ''}${a.description[q].link}`) +
               4
           );
@@ -110,29 +117,29 @@ generateRouter.post("/", (req, res) => {
       });
     });
     pdf
-      .moveTo(194.184, spacings[spacings?.length - 1])
-      .lineTo(579.28, spacings[spacings?.length - 1])
+      .moveTo(194.184, spacings[spacings.length - 1])
+      .lineTo(579.28, spacings[spacings.length - 1])
       .stroke();
     
-      pdf.font('Heading Font',10).text(personalProject?.name,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8)
-      pdf.font('Text Font',10).text(`About : ${personalProject?.about}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject?.name)+2)
-      pdf.font('Text Font',10).text(`Framework : ${personalProject?.framework}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject?.name)+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2)
-      pdf.font('Text Font',10).text(`Github Repository : `,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject?.name)+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2,{continued:true}).text(`${personalProject?.repository}`,{link:`${personalProject?.repository}`,underline:true})
+      pdf.font('Heading Font',10).text(personalProject.name,194.184, spacings[spacings.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8)
+      pdf.font('Text Font',10).text(`About : ${personalProject.about}`,194.184, spacings[spacings.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject.name)+2)
+      pdf.font('Text Font',10).text(`Framework : ${personalProject.framework}`,194.184, spacings[spacings.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject.name)+2+pdf.heightOfString(`About : ${personalProject.about}`)+2)
+      pdf.font('Text Font',10).text(`Github Repository : `,194.184, spacings[spacings.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject.name)+2+pdf.heightOfString(`About : ${personalProject.about}`)+2+pdf.heightOfString(`Framework : ${personalProject.framework}`)+2,{continued:true}).text(`${personalProject.repository}`,{link:`${personalProject.repository}`,underline:true})
 
       pdf
-      .moveTo(194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject?.name)+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+6+pdf.heightOfString(`PS : ${personalProject?.postScript}`))
-      .lineTo(579.28, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject?.name)+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+6+pdf.heightOfString(`PS : ${personalProject?.postScript}`))
+      .moveTo(194.184, spacings[spacings.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject.name)+2+pdf.heightOfString(`About : ${personalProject.about}`)+2+pdf.heightOfString(`Framework : ${personalProject.framework}`)+2+pdf.heightOfString(`Github Repository : `)+6+pdf.heightOfString(`PS : ${personalProject.postScript}`))
+      .lineTo(579.28, spacings[spacings.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject.name)+2+pdf.heightOfString(`About : ${personalProject.about}`)+2+pdf.heightOfString(`Framework : ${personalProject.framework}`)+2+pdf.heightOfString(`Github Repository : `)+6+pdf.heightOfString(`PS : ${personalProject.postScript}`))
       .stroke();
 
-      pdf.font('Text Font',14).text('HIGHEST ACADEMIC QUALIFICATION',194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `))
-      pdf.font('Text Font',10).text(`University : ${highestAcademicQualification?.university}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject?.postScript}`)+14+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+2)
-      pdf.font('Text Font',10).text(`Qualification : ${highestAcademicQualification?.qualification}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject?.postScript}`)+16+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+pdf.heightOfString(`University : ${highestAcademicQualification?.university}`)+2)
-      pdf.font('Text Font',10).text(`Stream : ${highestAcademicQualification?.stream}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject?.postScript}`)+18+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+pdf.heightOfString(`University : ${highestAcademicQualification?.university}`)+pdf.heightOfString(`Qualification : ${highestAcademicQualification?.qualification}`)+2)
-      pdf.font('Text Font',10).text(`GPA : ${highestAcademicQualification.gpa}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject?.postScript}`)+18+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+pdf.heightOfString(`University : ${highestAcademicQualification?.university}`)+pdf.heightOfString(`Qualification : ${highestAcademicQualification?.qualification}`)+pdf.heightOfString(`Stream : ${highestAcademicQualification?.stream}`)+4)
-      pdf.font('Text Font',10).text(`Duration : ${highestAcademicQualification?.from} - ${highestAcademicQualification?.to}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject?.postScript}`)+18+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+pdf.heightOfString('GITAM University')+pdf.heightOfString(`Qualification : ${highestAcademicQualification?.qualification}`)+pdf.heightOfString(`GPA : ${highestAcademicQualification.gpa}`)+pdf.heightOfString(`Stream : ${highestAcademicQualification?.stream}`)+6)
+      pdf.font('Text Font',14).text('HIGHEST ACADEMIC QUALIFICATION',194.184, spacings[spacings.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(`About : ${personalProject.about}`)+2+pdf.heightOfString(`Framework : ${personalProject.framework}`)+2+pdf.heightOfString(`Github Repository : `))
+      pdf.font('Text Font',10).text(`University : ${highestAcademicQualification.university}`,194.184, spacings[spacings.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject.about}`)+2+pdf.heightOfString(`Framework : ${personalProject.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject.postScript}`)+14+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+2)
+      pdf.font('Text Font',10).text(`Qualification : ${highestAcademicQualification.qualification}`,194.184, spacings[spacings.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject.about}`)+2+pdf.heightOfString(`Framework : ${personalProject.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject.postScript}`)+16+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+pdf.heightOfString(`University : ${highestAcademicQualification.university}`)+2)
+      pdf.font('Text Font',10).text(`Stream : ${highestAcademicQualification.stream}`,194.184, spacings[spacings.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject.about}`)+2+pdf.heightOfString(`Framework : ${personalProject.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject.postScript}`)+18+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+pdf.heightOfString(`University : ${highestAcademicQualification.university}`)+pdf.heightOfString(`Qualification : ${highestAcademicQualification.qualification}`)+2)
+      pdf.font('Text Font',10).text(`GPA : ${highestAcademicQualification.gpa}`,194.184, spacings[spacings.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject.about}`)+2+pdf.heightOfString(`Framework : ${personalProject.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject.postScript}`)+18+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+pdf.heightOfString(`University : ${highestAcademicQualification.university}`)+pdf.heightOfString(`Qualification : ${highestAcademicQualification.qualification}`)+pdf.heightOfString(`Stream : ${highestAcademicQualification.stream}`)+4)
+      pdf.font('Text Font',10).text(`Duration : ${Math.floor(parseInt(highestAcademicQualification.from))} - ${Math.floor(parseInt(highestAcademicQualification.to))}`,194.184, spacings[spacings.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString('CV-Builder')+2+pdf.heightOfString(`About : ${personalProject.about}`)+2+pdf.heightOfString(`Framework : ${personalProject.framework}`)+2+pdf.heightOfString(`Github Repository : `)+pdf.heightOfString(`PS : ${personalProject.postScript}`)+18+pdf.heightOfString('HIGHEST ACADEMIC QUALIFICATION')+pdf.heightOfString('GITAM University')+pdf.heightOfString(`Qualification : ${highestAcademicQualification.qualification}`)+pdf.heightOfString(`GPA : ${highestAcademicQualification.gpa}`)+pdf.heightOfString(`Stream : ${highestAcademicQualification.stream}`)+6)
 
-      pdf.font('Heading Font',10).text(`PS : ${personalProject?.postScript}`,194.184, spacings[spacings?.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject?.name)+2+pdf.heightOfString(`About : ${personalProject?.about}`)+2+pdf.heightOfString(`Framework : ${personalProject?.framework}`)+2+pdf.heightOfString(`Github Repository : `)+2);
-      pdf.font('Text Font',14).text('PERSONAL PROJECTS',194.184, spacings[spacings?.length - 1]+4)
+      pdf.font('Heading Font',10).text(`PS : ${personalProject.postScript}`,194.184, spacings[spacings.length - 1]+4+pdf.heightOfString('PERSONAL PROJECTS')+8+pdf.heightOfString(personalProject.name)+2+pdf.heightOfString(`About : ${personalProject.about}`)+2+pdf.heightOfString(`Framework : ${personalProject.framework}`)+2+pdf.heightOfString(`Github Repository : `)+2);
+      pdf.font('Text Font',14).text('PERSONAL PROJECTS',194.184, spacings[spacings.length - 1]+4)
 
     pdf.rect(16, spacings[0], 170.184, 777.89).fill(green);
     pdf.image("images/Passport.jpg", 16, spacings[0] + 12, {
@@ -180,9 +187,10 @@ generateRouter.post("/", (req, res) => {
       fs.createWriteStream('CV.pdf').on('finish',()=>{
         res.download('CV.pdf',{root:'.'});
       })
+
   } catch (error) {
-    console.log('Error',error);
-    res.status(500).send({message:"Network Error"});
+    if(err.message === '400') res.status(400).send({message:"Bad request"});
+    else res.status(500).send({message:"Network Error"});
   }
 });
 
