@@ -1,6 +1,5 @@
 import express from "express";
 import PDF from "pdfkit";
-import cors from "cors";
 import fs from "fs";
 import {colors} from "../styles/colors.js";
 import {stringValidator,arrayValidator,objectValidator} from "../utils.js";
@@ -12,10 +11,6 @@ const star = "•";
 const headings = ["CAREER SUMMARY", "WORK EXPERIENCE"];
 let imageMimetype;
 
-generateRouter.use(cors({
-  origin:['http://192.168.0.103:3001','http://localhost:3001'],
-  methods: ['GET','POST']
-}))
 
 generateRouter.post("/upload", (req,res) => {
   let uploadErr = new Error();
