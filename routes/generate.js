@@ -210,7 +210,12 @@ generateRouter.post("/", (req, res) => {
       pdf.pipe(pdfStream);
       pdf.end();
       pdfStream.on('finish',()=>{
-        res.download('CV.pdf',{root:'.'});
+        res.download('CV.pdf',{root:'.'},(downloadErr=>{
+          if(!downloadErr) {
+            fs.unlinkSync('CV.pdf');
+            fs.unlinkSync(`images/Passport.${imageMimetype}`)
+          }
+        }));
       })
   }
   } catch (error) {
