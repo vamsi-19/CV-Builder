@@ -10,15 +10,40 @@ const {black,white,green} = colors;
 const margins = { top: 12, bottom: 12, left: 30, right: 30 };
 const star = "•";
 const headings = ["CAREER SUMMARY", "WORK EXPERIENCE"];
+let imageMimetype;
 
 generateRouter.use(cors({
   origin:['http://192.168.0.103:3001','http://localhost:3001'],
   methods: ['GET','POST']
 }))
 
-const err = new Error();
+generateRouter.post("/upload", (req,res) => {
+  let uploadErr = new Error();
+  try {
+  const files = req.files;
+  const {image} = files;
+  if(!image && !(image.mimetype==='image/jpeg' || image.mimetype==='image/jpg') || image.mimetype==='image/png') {
+    uploadErr.message = '400';
+    throw new Error();
+  }
+  imageMimetype = image.mimetype.split('/')[1];
+  fs.writeFile(`images/Passport.${imageMimetype}`,image.data,{},(writeError)=>{
+    if(!writeError) {
+      res.status(200).send({message:'File uploaded'})
+    }
+    else {
+      uploadErr.message = '500';
+      throw new Error();
+    }
+  })
+  } catch (error) {
+    if(uploadErr.message === '400') res.status(400).send({message:"Bad request"});
+    else res.status(500).send({message:"Network Error"});
+  }
+})
 
 generateRouter.post("/", (req, res) => {
+  let err = new Error();
   try {
    const {careerSummary,highestAcademicQualification,hobbies,skills,workExperience:content,details,awards,personalProject} = req.body;
    const {university,qualification,stream,gpa,from,to} = highestAcademicQualification
@@ -28,7 +53,7 @@ generateRouter.post("/", (req, res) => {
     err.message = '400';
     throw new Error();
    }
-   
+   else {
     const pdf = new PDF({
       size: "A4",
       font: "Times-Roman",
@@ -142,7 +167,7 @@ generateRouter.post("/", (req, res) => {
       pdf.font('Text Font',14).text('PERSONAL PROJECTS',194.184, spacings[spacings.length - 1]+4)
 
     pdf.rect(16, spacings[0], 170.184, 777.89).fill(green);
-    pdf.image("images/Passport.jpg", 16, spacings[0] + 12, {
+    pdf.image(`images/Passport.${imageMimetype}`, 16, spacings[0] + 12, {
       fit: [170.184, 120],
       align: "center",
     });
@@ -181,13 +206,13 @@ generateRouter.post("/", (req, res) => {
       
       pdf.font("Text Font",10).list(hobbies,32,spacings[0]+pdf.heightOfString("CONTACT")+pdf.heightOfString(location)+pdf.heightOfString(mobile)+pdf.heightOfString(email)+pdf.heightOfString(linkedIn)+pdf.heightOfString("AWARDS / APPRAISALS")+505-4,{bulletRadius:1.5,baseline:'hanging',lineGap:4});
   
-      pdf.pipe(res);
-
+      let pdfStream = fs.createWriteStream('CV.pdf');
+      pdf.pipe(pdfStream);
       pdf.end();
-      fs.createWriteStream('CV.pdf').on('finish',()=>{
+      pdfStream.on('finish',()=>{
         res.download('CV.pdf',{root:'.'});
       })
-
+  }
   } catch (error) {
     if(err.message === '400') res.status(400).send({message:"Bad request"});
     else res.status(500).send({message:"Network Error"});
