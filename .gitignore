@@ -131,3 +131,4 @@ dist
 mockData.js
 Passport.*
 CV.pdf
+.DS_Store
