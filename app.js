@@ -6,8 +6,8 @@ const app = express();
 const port = 3000;
 
 app.use(express.json());
-app.use(fileUpload());
-app.use('/api',router)
+app.use(fileUpload({limits:{fileSize:5000000},abortOnLimit:true}));
+app.use('/api',router);
 
 app.listen(port,() => {
     console.log(`App started on port ${port}`);
